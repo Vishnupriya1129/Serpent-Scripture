@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Serpent's Scripture · Slytherin Typing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #080e08;
+            overflow: hidden;
+            font-family: 'Cinzel', serif;
+            user-select: none;
+            height: 100vh;
+            color: #c8dcc8;
+        }
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        #hud {
+            position: fixed;
+            top: 16px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(8, 16, 8, 0.75);
+            backdrop-filter: blur(10px);
+            padding: 10px 22px;
+            border-radius: 14px;
+            border: 1px solid rgba(60, 120, 60, 0.12);
+            box-shadow: 0 0 50px rgba(0, 30, 0, 0.12);
+        }
+        .hud-left,
+        .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hud-label {
+            font-size: 8px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #5a7a5a;
+            text-shadow: 0 0 8px rgba(40, 100, 40, 0.12);
+        }
+        .hud-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #b5e6b5;
+            text-shadow: 0 0 20px rgba(60, 200, 60, 0.08);
+            letter-spacing: 1px;
+        }
+        .shield-wrap {
+            width: 100px;
+            height: 5px;
+            background: rgba(30, 60, 30, 0.4);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(60, 120, 60, 0.12);
+            margin-top: 3px;
+        }
+        .shield-fill {
+            height: 100%;
+            width: 100%;
+            background: #3a8a3a;
+            border-radius: 4px;
+            transition: width 0.2s ease;
+            box-shadow: 0 0 15px rgba(60, 200, 60, 0.10);
+        }
+        .shield-fill.danger {
+            background: #8a2a2a;
+            box-shadow: 0 0 15px rgba(200, 60, 60, 0.15);
+        }
+        .shield-fill.warning {
+            background: #8a7a2a;
+            box-shadow: 0 0 15px rgba(200, 180, 60, 0.15);
+        }
+
+        #nav-bar {
+            position: fixed;
+            top: 16px;
+            right: 24px;
+            z-index: 20;
+            pointer-events: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        #nav-bar button {
+            background: rgba(8, 16, 8, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(60, 120, 60, 0.12);
+            color: #8aba8a;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            pointer-events: auto;
+        }
+        #nav-bar button:hover {
+            background: rgba(60, 140, 60, 0.08);
+            border-color: rgba(60, 200, 60, 0.25);
+            box-shadow: 0 0 30px rgba(60, 180, 60, 0.04);
+        }
+        #nav-bar button.hidden {
+            display: none;
+        }
+
+        #timer-badge {
+            position: fixed;
+            top: 78px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Cinzel', serif;
+            color: #8aba8a;
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 30px rgba(60, 180, 60, 0.10);
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(8, 16, 8, 0.4);
+            padding: 4px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(60, 120, 60, 0.06);
+            text-transform: uppercase;
+        }
+        #timer-badge.warning {
+            color: #d4c87a;
+        }
+        #timer-badge.danger {
+            color: #8a4a4a;
+        }
+        #timer-badge.exam {
+            color: #d4c87a;
+            border-color: rgba(180, 180, 60, 0.12);
+            box-shadow: 0 0 40px rgba(180, 180, 60, 0.04);
+        }
+
+        #passage-area {
+            position: fixed;
+            top: 122px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+        }
+        #passage-box {
+            background: rgba(8, 16, 8, 0.75);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(60, 120, 60, 0.06);
+            border-radius: 12px;
+            padding: 16px 22px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #6a8a6a;
+            text-align: left;
+            max-height: 170px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #3a5a3a transparent;
+        }
+        #passage-box::-webkit-scrollbar {
+            width: 4px;
+        }
+        #passage-box::-webkit-scrollbar-thumb {
+            background: #3a5a3a;
+            border-radius: 4px;
+        }
+        #passage-box .char {
+            transition: color 0.08s;
+        }
+        #passage-box .char.correct {
+            color: #8aba8a;
+        }
+        #passage-box .char.incorrect {
+            color: #8a4a4a;
+            background: rgba(138, 74, 74, 0.10);
+        }
+        #passage-box .char.current {
+            color: #cdd6f4;
+            background: rgba(60, 180, 60, 0.05);
+            border-left: 2px solid #6a9a6a;
+            padding-left: 1px;
+        }
+        #passage-box .char.pending {
+            color: #5a7a5a;
+        }
+
+        #input-area {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 10;
+            text-align: center;
+            width: 90%;
+            max-width: 760px;
+        }
+        #input-label {
+            font-size: 9px;
+            letter-spacing: 4px;
+            color: #5a7a5a;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(40, 100, 40, 0.06);
+        }
+        #typed-box {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
+            min-height: 52px;
+            min-width: 100px;
+            width: 100%;
+            border: 1px solid rgba(60, 140, 60, 0.12);
+            border-radius: 10px;
+            background: rgba(6, 14, 6, 0.8);
+            backdrop-filter: blur(8px);
+            color: #c8f0c8;
+            font-size: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(60, 200, 60, 0.03);
+            transition: all 0.2s;
+            justify-content: center;
+        }
+        #typed-box.active {
+            border-color: rgba(60, 200, 60, 0.22);
+            box-shadow: 0 0 40px rgba(60, 180, 60, 0.03);
+        }
+        .cursor-blink {
+            display: inline-block;
+            width: 2px;
+            height: 26px;
+            background: #6a9a6a;
+            margin-left: 3px;
+            vertical-align: middle;
+            animation: blink .8s step-end infinite;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        #combo-box {
+            position: fixed;
+            bottom: 106px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Cinzel', serif;
+            color: #d4c87a;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 30px rgba(200, 180, 60, 0.08);
+            opacity: 0;
+            transition: opacity 0.25s;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(8, 16, 8, 0.4);
+            padding: 2px 18px;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(180, 180, 60, 0.05);
+        }
+        #combo-box.show {
+            opacity: 1;
+        }
+
+        #last-word {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(120, 200, 120, 0.15);
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.5s;
+            opacity: 0;
+            text-shadow: 0 0 30px rgba(60, 180, 60, 0.03);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+            background: rgba(6, 12, 6, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #start-box,
+        #gameover-box {
+            text-align: center;
+            padding: 38px 56px;
+            border: 1px solid rgba(60, 120, 60, 0.10);
+            border-radius: 20px;
+            background: rgba(8, 16, 8, 0.3);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 80px rgba(0, 30, 0, 0.05);
+            max-width: 600px;
+            width: 92%;
+        }
+        #start-box h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 38px;
+            font-weight: 700;
+            color: #8aba8a;
+            text-shadow: 0 0 60px rgba(60, 180, 60, 0.08), 0 4px 30px rgba(0, 0, 0, 0.4);
+            letter-spacing: 5px;
+            margin-bottom: 4px;
+        }
+        #start-box .sub,
+        #gameover-box .sub {
+            font-family: 'Cinzel', serif;
+            color: #4a6a4a;
+            font-size: 10px;
+            letter-spacing: 3px;
+            margin-bottom: 22px;
+        }
+        #start-box .help {
+            font-family: 'Cinzel', serif;
+            color: #5a7a5a;
+            font-size: 12px;
+            line-height: 2.2;
+            margin-bottom: 28px;
+        }
+        #start-box .help em {
+            color: #8aba8a;
+            font-style: normal;
+        }
+        .time-selector {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .time-selector button {
+            padding: 6px 14px;
+            font-family: 'Cinzel', serif;
+            background: transparent;
+            border: 1px solid rgba(60, 140, 60, 0.12);
+            color: #8aba8a;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+        }
+        .time-selector button:hover {
+            background: rgba(60, 140, 60, 0.06);
+            border-color: rgba(60, 200, 60, 0.22);
+        }
+        .time-selector button.active {
+            background: rgba(60, 140, 60, 0.10);
+            border-color: #8aba8a;
+        }
+        .time-selector button.exam-btn {
+            border-color: rgba(180, 180, 60, 0.18);
+            color: #d4c87a;
+        }
+        .time-selector button.exam-btn.active {
+            background: rgba(180, 180, 60, 0.08);
+            border-color: #d4c87a;
+        }
+        #start-box button,
+        #gameover-box button {
+            padding: 12px 48px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+            background: transparent;
+            border: 1px solid rgba(60, 140, 60, 0.18);
+            color: #8aba8a;
+            border-radius: 8px;
+            cursor: pointer;
+            letter-spacing: 4px;
+            transition: all 0.3s;
+            text-shadow: 0 0 20px rgba(60, 180, 60, 0.03);
+        }
+        #start-box button:hover,
+        #gameover-box button:hover {
+            background: rgba(60, 140, 60, 0.05);
+            border-color: rgba(60, 200, 60, 0.28);
+            box-shadow: 0 0 40px rgba(60, 180, 60, 0.03);
+            transform: scale(1.01);
+        }
+
+        #gameover-box h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 32px;
+            color: #8aba8a;
+            text-shadow: 0 0 60px rgba(60, 180, 60, 0.08);
+            letter-spacing: 5px;
+            margin-bottom: 2px;
+        }
+        #gameover-box .sub {
+            color: #4a6a4a;
+            margin-bottom: 10px;
+        }
+        #final-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 42px;
+            color: #8aba8a;
+            text-shadow: 0 0 30px rgba(60, 180, 60, 0.05);
+            margin: 10px 0 2px;
+        }
+        #wpm-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 26px;
+            color: #d4c87a;
+            margin: 4px 0;
+        }
+        .result-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .result-actions button {
+            padding: 10px 28px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+            background: transparent;
+            border: 1px solid rgba(60, 140, 60, 0.15);
+            color: #8aba8a;
+            border-radius: 8px;
+            cursor: pointer;
+            letter-spacing: 3px;
+            transition: all 0.3s;
+        }
+        .result-actions button:hover {
+            background: rgba(60, 140, 60, 0.05);
+            border-color: rgba(60, 200, 60, 0.28);
+            box-shadow: 0 0 30px rgba(60, 180, 60, 0.03);
+        }
+        .result-actions .pdf-btn {
+            border-color: rgba(180, 180, 60, 0.18);
+            color: #d4c87a;
+        }
+        .result-actions .pdf-btn:hover {
+            background: rgba(180, 180, 60, 0.05);
+            border-color: rgba(180, 180, 60, 0.28);
+        }
+
+        #hint-bottom {
+            position: fixed;
+            bottom: 12px;
+            right: 20px;
+            font-family: 'Cinzel', serif;
+            color: #2a3a2a;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #stats-line {
+            position: fixed;
+            bottom: 12px;
+            left: 20px;
+            font-family: 'Cinzel', serif;
+            color: #2a3a2a;
+            font-size: 15px;
+            pointer-events: none;
+            z-index: 10;
+            animation: slither 4s ease-in-out infinite;
+        }
+        @keyframes slither {
+            0%,
+            100% {
+                transform: translateX(0) rotate(0deg);
+            }
+            50% {
+                transform: translateX(6px) rotate(2deg);
+            }
+        }
+
+        /* ===== CERTIFICATE ===== */
+        #certificate-template {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            width: 900px;
+            height: 640px;
+            background: radial-gradient(ellipse at 50% 20%, #0f220f, #060e06 75%);
+            font-family: 'Cinzel', 'Georgia', serif;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            box-shadow: 0 0 120px rgba(0, 30, 0, 0.6);
+        }
+
+        #certificate-template .cert-inner {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(160deg, rgba(12, 28, 12, 0.92), rgba(4, 10, 4, 0.98));
+            border: 2.5px solid #4a8a4a;
+            border-radius: 16px;
+            padding: 30px 38px;
+            position: relative;
+            box-shadow: inset 0 0 80px rgba(30, 80, 30, 0.04), 0 0 60px rgba(0, 20, 0, 0.4), 0 0 100px rgba(30, 80, 30, 0.02);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #certificate-template .cert-inner::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            border: 1.5px solid rgba(60, 140, 60, 0.10);
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        #certificate-template .cert-inner::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            border: 0.5px solid rgba(60, 140, 60, 0.05);
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        #certificate-template .corner {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-color: #b8c87a;
+            border-style: solid;
+            border-width: 0;
+            opacity: 0.5;
+            filter: drop-shadow(0 0 6px rgba(180, 200, 120, 0.06));
+        }
+        #certificate-template .corner-tl {
+            top: 16px;
+            left: 16px;
+            border-top-width: 2.5px;
+            border-left-width: 2.5px;
+            border-top-left-radius: 4px;
+        }
+        #certificate-template .corner-tr {
+            top: 16px;
+            right: 16px;
+            border-top-width: 2.5px;
+            border-right-width: 2.5px;
+            border-top-right-radius: 4px;
+        }
+        #certificate-template .corner-bl {
+            bottom: 16px;
+            left: 16px;
+            border-bottom-width: 2.5px;
+            border-left-width: 2.5px;
+            border-bottom-left-radius: 4px;
+        }
+        #certificate-template .corner-br {
+            bottom: 16px;
+            right: 16px;
+            border-bottom-width: 2.5px;
+            border-right-width: 2.5px;
+            border-bottom-right-radius: 4px;
+        }
+
+        #certificate-template .corner-inner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: rgba(180, 200, 120, 0.15);
+            border-style: solid;
+            border-width: 0;
+            opacity: 0.4;
+        }
+        #certificate-template .corner-inner-tl {
+            top: 28px;
+            left: 28px;
+            border-top-width: 1px;
+            border-left-width: 1px;
+        }
+        #certificate-template .corner-inner-tr {
+            top: 28px;
+            right: 28px;
+            border-top-width: 1px;
+            border-right-width: 1px;
+        }
+        #certificate-template .corner-inner-bl {
+            bottom: 28px;
+            left: 28px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+        #certificate-template .corner-inner-br {
+            bottom: 28px;
+            right: 28px;
+            border-bottom-width: 1px;
+            border-right-width: 1px;
+        }
+
+        #certificate-template .diamond-chain {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(180, 200, 120, 0.08);
+            font-size: 10px;
+            letter-spacing: 10px;
+            font-weight: 400;
+        }
+        #certificate-template .diamond-top {
+            top: 10px;
+        }
+        #certificate-template .diamond-bottom {
+            bottom: 10px;
+        }
+
+        #certificate-template .snake-svg {
+            width: 60px;
+            height: 50px;
+            margin: 0 auto -4px auto;
+            display: block;
+            filter: drop-shadow(0 0 20px rgba(60, 180, 60, 0.08));
+        }
+        #certificate-template .snake-svg path {
+            stroke: #8aba8a;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        #certificate-template .snake-svg .head {
+            fill: #8aba8a;
+            stroke: none;
+        }
+        #certificate-template .snake-svg .eye {
+            fill: #d4c87a;
+            stroke: none;
+        }
+
+        #certificate-template .cert-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 30px;
+            letter-spacing: 10px;
+            text-align: center;
+            color: #d4c87a;
+            text-shadow: 0 0 60px rgba(180, 180, 60, 0.04), 0 2px 12px rgba(0, 0, 0, 0.4);
+            margin-bottom: -2px;
+            line-height: 1.2;
+        }
+
+        #certificate-template .cert-subtitle {
+            font-family: 'Cinzel', serif;
+            font-weight: 400;
+            font-size: 11px;
+            letter-spacing: 7px;
+            text-align: center;
+            color: #5a7a5a;
+            margin-top: -2px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        #certificate-template .divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 4px 0 10px 0;
+        }
+        #certificate-template .divider-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(180, 200, 120, 0.10), transparent);
+        }
+        #certificate-template .divider-icon {
+            color: rgba(180, 200, 120, 0.08);
+            font-size: 14px;
+            letter-spacing: 6px;
+        }
+
+        #certificate-template .report-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 6px;
+            text-align: center;
+            color: #8aba8a;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(60, 180, 60, 0.03);
+        }
+
+        #certificate-template .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px 40px;
+            background: rgba(10, 22, 10, 0.25);
+            border-radius: 10px;
+            padding: 14px 30px;
+            border: 1px solid rgba(60, 120, 60, 0.04);
+            margin: 0 10px 8px 10px;
+            backdrop-filter: blur(2px);
+        }
+
+        #certificate-template .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(60, 120, 60, 0.03);
+        }
+        #certificate-template .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        #certificate-template .stat-label {
+            font-family: 'Cinzel', serif;
+            font-weight: 400;
+            font-size: 10.5px;
+            color: #5a7a5a;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #certificate-template .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        #certificate-template .stat-value.gold {
+            color: #d4c87a;
+            text-shadow: 0 0 20px rgba(180, 180, 60, 0.03);
+        }
+        #certificate-template .stat-value.emerald {
+            color: #8aba8a;
+            text-shadow: 0 0 20px rgba(60, 180, 60, 0.03);
+        }
+
+        #certificate-template .quote {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 13px;
+            text-align: center;
+            color: #5a7a5a;
+            margin: 4px 0 8px 0;
+            letter-spacing: 1.5px;
+            font-weight: 400;
+        }
+        #certificate-template .quote::before {
+            content: '"';
+            color: rgba(60, 140, 60, 0.15);
+            font-size: 18px;
+            margin-right: 4px;
+        }
+        #certificate-template .quote::after {
+            content: '"';
+            color: rgba(60, 140, 60, 0.15);
+            font-size: 18px;
+            margin-left: 4px;
+        }
+
+        #certificate-template .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid rgba(60, 120, 60, 0.04);
+        }
+
+        #certificate-template .footer-text {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            color: #4a6a4a;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+        }
+        #certificate-template .footer-text strong {
+            color: #6a8a6a;
+            font-weight: 700;
+        }
+
+        #certificate-template .footer-seal {
+            font-size: 30px;
+            opacity: 0.3;
+            filter: drop-shadow(0 0 15px rgba(60, 180, 60, 0.02));
+            letter-spacing: 0;
+            line-height: 1;
+        }
+
+        #certificate-template .watermark {
+            position: absolute;
+            bottom: 50px;
+            right: 45px;
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 52px;
+            color: rgba(30, 60, 30, 0.03);
+            letter-spacing: 14px;
+            pointer-events: none;
+            transform: rotate(-8deg);
+            text-transform: uppercase;
+        }
+
+        #certificate-template .crest-accent {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: rgba(60, 140, 60, 0.04);
+            letter-spacing: 20px;
+            pointer-events: none;
+        }
+
+        @media (max-width: 600px) {
+            #hud {
+                flex-direction: column;
+                gap: 4px;
+                top: 8px;
+                left: 8px;
+                right: 8px;
+                padding: 8px 12px;
+            }
+            .hud-left,
+            .hud-right {
+                gap: 12px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .hud-value {
+                font-size: 16px;
+            }
+            #nav-bar {
+                top: 8px;
+                right: 10px;
+            }
+            #nav-bar button {
+                padding: 3px 10px;
+                font-size: 9px;
+            }
+            #timer-badge {
+                top: 68px;
+                font-size: 12px;
+                letter-spacing: 2px;
+                padding: 3px 12px;
+            }
+            #passage-area {
+                top: 105px;
+            }
+            #passage-box {
+                font-size: 13px;
+                padding: 10px 14px;
+                max-height: 120px;
+            }
+            #typed-box {
+                font-size: 18px;
+                padding: 8px 14px;
+                min-height: 44px;
+            }
+            #start-box h1 {
+                font-size: 26px;
+            }
+            #start-box,
+            #gameover-box {
+                padding: 24px 18px;
+            }
+            #final-score {
+                font-size: 34px;
+            }
+            #wpm-display {
+                font-size: 20px;
+            }
+            .time-selector button {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+    <canvas id="mainCanvas"></canvas>
+    <canvas id="fxCanvas"></canvas>
+
+    <div id="nav-bar">
+        <button id="homeBtn" class="hidden">⌂ Home</button>
+        <button id="pdfBtn" class="hidden" style="border-color:rgba(180,180,60,0.18);color:#d4c87a;">⬇ PDF</button>
+    </div>
+
+    <div id="hud">
+        <div class="hud-left">
+            <div class="hud-item"><span class="hud-label">✦ Score</span><span class="hud-value" id="scoreVal">0</span></div>
+            <div class="hud-item"><span class="hud-label">⬡ Errors</span><span class="hud-value" id="errorVal">0</span></div>
+            <div class="hud-item"><span class="hud-label">📖 Progress</span><span class="hud-value" id="passageCountVal">0%</span></div>
+        </div>
+        <div class="hud-right">
+            <div class="hud-item">
+                <span class="hud-label">⬟ Shield</span>
+                <div class="shield-wrap"><div class="shield-fill" id="shieldFill"></div></div>
+            </div>
+        </div>
+    </div>
+    <div id="timer-badge">⏳ 1:00</div>
+
+    <div id="passage-area">
+        <div id="passage-box"></div>
+    </div>
+
+    <div id="input-area">
+        <div id="input-label">▸ Type the scripture ◂</div>
+        <div id="typed-box"><span class="cursor-blink"></span></div>
+    </div>
+    <div id="combo-box">✦ Combo ×1</div>
+    <div id="last-word"></div>
+    <div id="hint-bottom">[ Esc clear · Bksp delete ]</div>
+    <div id="stats-line">🐍</div>
+
+    <div class="overlay" id="start-screen">
+        <div id="start-box">
+            <h1>⚡ Serpent's Scripture</h1>
+            <div class="sub">◈ Slytherin · Typing Assessment ◈</div>
+            <div class="help">
+                <em>Type the sacred text</em> with precision and speed.<br />
+                Each error weakens your shield. <em>Choose your trial</em> below.
+            </div>
+            <div class="time-selector" id="timeSelector">
+                <button data-time="60">1 min</button>
+                <button data-time="180">3 min</button>
+                <button data-time="300" class="exam-btn">⚡ Final Exam</button>
+                <button data-time="600">10 min</button>
+                <button data-time="1800">30 min</button>
+                <button data-time="3600">60 min</button>
+            </div>
+            <button id="startBtn">►&nbsp; Begin</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="gameover-screen">
+        <div id="gameover-box">
+            <h1>⚡ Scripture Mastered</h1>
+            <div class="sub">the serpent acknowledges your skill</div>
+            <div id="final-score">0</div>
+            <div id="wpm-display">WPM: 0</div>
+            <div class="sub" id="final-wave">accuracy: 0% · 0/0 correct</div>
+            <div class="result-actions">
+                <button id="restartBtn">► Retry</button>
+                <button id="pdfResultBtn" class="pdf-btn">⬇ PDF Certificate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CERTIFICATE TEMPLATE ===== -->
+    <div id="certificate-template">
+        <div class="cert-inner">
+            <div class="corner corner-tl"></div>
+            <div class="corner corner-tr"></div>
+            <div class="corner corner-bl"></div>
+            <div class="corner corner-br"></div>
+            <div class="corner-inner corner-inner-tl"></div>
+            <div class="corner-inner corner-inner-tr"></div>
+            <div class="corner-inner corner-inner-bl"></div>
+            <div class="corner-inner corner-inner-br"></div>
+            <div class="diamond-chain diamond-top">✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+            <div class="diamond-chain diamond-bottom">✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+            <div class="watermark">SLYTHERIN</div>
+            <div class="crest-accent">⬡ ⬡ ⬡ ⬡ ⬡ ⬡</div>
+
+            <svg class="snake-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="snakeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#5a8a5a" />
+                        <stop offset="50%" stop-color="#8aba8a" />
+                        <stop offset="100%" stop-color="#5a8a5a" />
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2" result="blur" />
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
+                <path d="M 10 40 Q 30 10, 50 40 Q 70 70, 90 40" stroke="url(#snakeGrad)" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+                <path d="M 88 35 L 96 30 L 94 40 Z" fill="#8aba8a" stroke="none" />
+                <circle cx="91" cy="34" r="2" fill="#d4c87a" />
+                <circle cx="91" cy="38" r="2" fill="#d4c87a" />
+                <path d="M 12 42 L 4 38 L 6 46 Z" fill="#5a8a5a" stroke="none" />
+                <circle cx="30" cy="30" r="2" fill="rgba(180,200,120,0.08)" />
+                <circle cx="50" cy="40" r="2" fill="rgba(180,200,120,0.08)" />
+                <circle cx="70" cy="50" r="2" fill="rgba(180,200,120,0.08)" />
+            </svg>
+
+            <div class="cert-title">SERPENT'S SCRIPTURE</div>
+            <div class="cert-subtitle">— Slytherin Typing Assessment —</div>
+
+            <div class="divider">
+                <span class="divider-line"></span>
+                <span class="divider-icon">✦ ✦ ✦</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <div class="report-title">✦ Assessment Report ✦</div>
+
+            <div class="stats-grid" id="cert-stats">
+                <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value gold" id="cert-score">0</span></div>
+                <div class="stat-item"><span class="stat-label">WPM</span><span class="stat-value gold" id="cert-wpm">0</span></div>
+                <div class="stat-item"><span class="stat-label">Accuracy</span><span class="stat-value emerald" id="cert-accuracy">0%</span></div>
+                <div class="stat-item"><span class="stat-label">Correct</span><span class="stat-value emerald" id="cert-correct">0 / 0</span></div>
+                <div class="stat-item"><span class="stat-label">Time Taken</span><span class="stat-value emerald" id="cert-time">0s</span></div>
+                <div class="stat-item"><span class="stat-label">Mode</span><span class="stat-value gold" id="cert-mode">Standard</span></div>
+            </div>
+
+            <div class="quote">The serpent acknowledges those who master the scripture</div>
+
+            <div class="footer">
+                <span class="footer-text">Issued: <strong id="cert-date">16 Jun 2028</strong> · House of <strong>Slytherin</strong></span>
+                <span class="footer-seal">⬡</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // Canvas setup
+        // ============================================================
+        const bgC = document.getElementById('bgCanvas').getContext('2d');
+        const mainC = document.getElementById('mainCanvas').getContext('2d');
+        const fxC = document.getElementById('fxCanvas').getContext('2d');
+
+        let W, H;
+
+        function resize() {
+            W = window.innerWidth;
+            H = window.innerHeight;
+            for (const c of [bgC.canvas, mainC.canvas, fxC.canvas]) {
+                c.width = W;
+                c.height = H;
+            }
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // ============================================================
+        // Stars
+        // ============================================================
+        let stars = [];
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 220; i++) {
+                stars.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    s: Math.random() * 1.6 + 0.3,
+                    sp: Math.random() * 0.18 + 0.02,
+                    b: Math.random() * 0.5 + 0.3,
+                    p: Math.random() * 100
+                });
+            }
+        }
+        initStars();
+
+        function drawStars(t) {
+            bgC.clearRect(0, 0, W, H);
+            const g = bgC.createRadialGradient(W * 0.4, H * 0.3, 0, W * 0.4, H * 0.3, W * 0.7);
+            g.addColorStop(0, 'rgba(10,30,10,0.04)');
+            g.addColorStop(1, 'transparent');
+            bgC.fillStyle = g;
+            bgC.fillRect(0, 0, W, H);
+            for (const s of stars) {
+                const f = 0.7 + 0.3 * Math.sin(t / 700 + s.p);
+                bgC.fillStyle = `rgba(140,200,140,${s.b * f * 0.28})`;
+                bgC.beginPath();
+                bgC.arc(s.x, s.y, s.s, 0, Math.PI * 2);
+                bgC.fill();
+                s.y += s.sp;
+                if (s.y > H) { s.y = -3;
+                    s.x = Math.random() * W; }
+            }
+            bgC.strokeStyle = 'rgba(40,80,40,0.008)';
+            bgC.lineWidth = 1;
+            for (let x = 0; x < W; x += 80) { bgC.beginPath();
+                bgC.moveTo(x, 0);
+                bgC.lineTo(x, H);
+                bgC.stroke(); }
+            for (let y = 0; y < H; y += 80) { bgC.beginPath();
+                bgC.moveTo(0, y);
+                bgC.lineTo(W, y);
+                bgC.stroke(); }
+        }
+
+        // ============================================================
+        // Particles
+        // ============================================================
+        let particles = [];
+
+        function spawnExplosion(x, y, color, n) {
+            const cs = [color, '#6aaa6a', '#b5d6b5', '#8aba8a', '#3a7a3a', '#c8e6c8'];
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * Math.PI * 2,
+                    sp = Math.random() * 5 + 1.5;
+                particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(a) * sp,
+                    vy: Math.sin(a) * sp - 1,
+                    life: 1,
+                    decay: Math.random() * 0.025 + 0.008,
+                    s: Math.random() * 4 + 1.5,
+                    c: cs[Math.floor(Math.random() * cs.length)]
+                });
+            }
+        }
+
+        function updateFX() {
+            fxC.clearRect(0, 0, W, H);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.02;
+                p.life -= p.decay;
+                if (p.life <= 0) { particles.splice(i, 1); continue; }
+                fxC.globalAlpha = p.life * 0.75;
+                fxC.fillStyle = p.c;
+                fxC.shadowColor = p.c;
+                fxC.shadowBlur = 10;
+                fxC.beginPath();
+                fxC.arc(p.x, p.y, p.s * p.life, 0, Math.PI * 2);
+                fxC.fill();
+            }
+            fxC.globalAlpha = 1;
+            fxC.shadowBlur = 0;
+        }
+
+        // ============================================================
+        // Audio
+        // ============================================================
+        let audioCtx = null;
+
+        function playTypingSound(correct) {
+            try {
+                if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = correct ? 800 : 400;
+                gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch (e) { /* silent */ }
+        }
+
+        // ============================================================
+        // PASSAGES
+        // ============================================================
+        const PASSAGES = [
+            "The serpent coiled in the shadow of the ancient stone walls, whispering secrets of power and ambition.",
+            "In the dungeons of Hogwarts, a hidden chamber held the legacy of Salazar Slytherin.",
+            "Dark magic pulsed through the veins of the basilisk, its gaze petrifying all who dared to look.",
+            "The diary of Tom Riddle revealed a terrible truth: the heir had returned, and with him, the monster.",
+            "Professor Snape's memories held the key to the final battle, changing everything.",
+            "The Forbidden Forest held many secrets, from the centaurs who read the stars to the creatures in the shadows.",
+            "The Sorting Hat's song echoed through the Great Hall, its ancient wisdom guiding the young witches and wizards.",
+            "The Quidditch pitch was alive with energy as the players soared through the air, chasing the golden snitch.",
+            "Professor McGonagall's stern gaze could silence even the most boisterous students.",
+            "The potions classroom smelled of exotic ingredients and simmering brews.",
+            "The Marauder's Map revealed every secret passage and hidden room within the castle walls.",
+            "The Mirror of Erised showed the deepest desires of the heart, both a comfort and a torment.",
+            "The Chamber of Secrets lay hidden beneath the school, its entrance known only to the heir of Slytherin.",
+            "The Room of Requirement appeared only to those who truly needed it, its magic as flexible as imagination.",
+            "The Order of the Phoenix gathered in secret, their courage unwavering against the dark forces."
+        ];
+
+        const EXAM_PASSAGES = [
+            "The enduring legacy of Salazar Slytherin, a complex tapestry woven with threads of ancient magic, dark ambition, and an unwavering commitment to the preservation of pureblood ideology, fundamentally shaped the course of magical history in Britain. His creation of the Chamber of Secrets and the monstrous basilisk within was not merely an act of defense, but a profound statement of his belief in magical purity, a warning to those he deemed unworthy of the magical gifts bestowed upon the world. This radical stance, which ultimately led to his schism with the other founders of Hogwarts, planted the seeds of a conflict that would simmer for centuries, a conflict that found its most terrifying expression in the rise of his own heir, Tom Marvolo Riddle, who would adopt the moniker of Lord Voldemort and plunge the wizarding world into a devastating war that challenged the very fabric of their society.",
+
+            "The gruesome and forbidden process of creating a Horcrux, an act of such profound evil that it tears the soul asunder, represented the darkest pinnacle of Lord Voldemort's pursuit of immortality, a desperate and ruthless attempt to conquer the finality of death by imprisoning fragments of his corrupted being within ordinary objects, from the mundane diary of a young wizard to the ancient and hallowed artifacts of the Hogwarts founders. This unholy quest forced him to commit unspeakable acts of murder, each one a deliberate and cold-blooded sacrifice designed to splinter his humanity, leaving a trail of devastation and sorrow that scarred the lives of countless witches and wizards, including Harry Potter, who became the unintended and unwitting Horcrux that would ultimately lead to the Dark Lord's downfall, fulfilling an ancient prophecy that bound their fates inextricably together.",
+
+            "The Battle of Hogwarts, a cataclysmic confrontation between the forces of good and the relentless tide of Voldemort's Death Eater army, represented the culmination of years of fear, loss, and unwavering resilience, transforming the ancient castle into a war-torn battleground where the very walls echoed with the cries of the fallen and the defiant shouts of the remaining defenders. The intricate network of protective enchantments, the loyalty of the house-elves, the strategic genius of the Order of the Phoenix, and the unshakable courage of the students and staff, all coalesced into a desperate last stand against an enemy that seemed to be achieving its goal of total domination, a climax that would hinge not on the might of a single spell, but on the profound understanding of magic's deepest secrets, the power of sacrifice, and the eternal choice between what is easy and what is right, a choice that would ultimately determine the fate of the entire wizarding world."
+        ];
+
+        // ============================================================
+        // Game state
+        // ============================================================
+        let passage = '';
+        let charIndex = 0;
+        let typedChars = [];
+        let errors = 0;
+        let shield = 100;
+        let maxShield = 100;
+        let score = 0;
+        let combo = 1;
+        let comboTimer = 0;
+        let timeLimit = 60;
+        let timeLeft = 60;
+        let timerInterval = null;
+        let gameRunning = false;
+        let startTime = null;
+        let elapsedSeconds = 0;
+        let isExamMode = false;
+        let gameEnded = false;
+        let totalCorrectChars = 0;
+        let totalTypedChars = 0;
+        let passageTotalLength = 0;
+
+        const $ = id => document.getElementById(id);
+        const D = {
+            score: $('scoreVal'),
+            errors: $('errorVal'),
+            shield: $('shieldFill'),
+            typed: $('typed-box'),
+            combo: $('combo-box'),
+            timer: $('timer-badge'),
+            passageBox: $('passage-box'),
+            finalScore: $('final-score'),
+            finalWPM: $('wpm-display'),
+            finalAccuracy: $('final-wave'),
+            start: $('start-screen'),
+            gameover: $('gameover-screen'),
+            lastWord: $('last-word'),
+            homeBtn: $('homeBtn'),
+            pdfBtn: $('pdfBtn'),
+            pdfResultBtn: $('pdfResultBtn'),
+            passageCount: $('passageCountVal'),
+        };
+
+        function selectRandomPassage() {
+            const idx = Math.floor(Math.random() * PASSAGES.length);
+            return PASSAGES[idx];
+        }
+
+        function selectRandomExamPassage() {
+            const idx = Math.floor(Math.random() * EXAM_PASSAGES.length);
+            return EXAM_PASSAGES[idx];
+        }
+
+        function loadPassage(text) {
+            passage = text;
+            passageTotalLength = text.length;
+            charIndex = 0;
+            typedChars = [];
+            errors = 0;
+            shield = 100;
+            D.combo.classList.remove('show');
+            renderPassage();
+            updateStats();
+            updateTypedDisplay();
+        }
+
+        function renderPassage() {
+            const box = D.passageBox;
+            let html = '';
+            for (let i = 0; i < passage.length; i++) {
+                const ch = passage[i];
+                let cls = 'char';
+                if (i < typedChars.length) {
+                    cls += typedChars[i].status === 'correct' ? ' correct' : ' incorrect';
+                } else if (i === typedChars.length) {
+                    cls += ' current';
+                } else {
+                    cls += ' pending';
+                }
+                html += `<span class="${cls}">${ch}</span>`;
+            }
+            box.innerHTML = html;
+            const currentEl = box.querySelector('.char.current');
+            if (currentEl) currentEl.scrollIntoView({ block: 'center', inline: 'nearest' });
+        }
+
+        function updateStats() {
+            D.score.textContent = score;
+            D.errors.textContent = errors;
+            const progress = passageTotalLength > 0 ? Math.round((typedChars.length / passageTotalLength) * 100) : 0;
+            D.passageCount.textContent = isExamMode ? `${progress}%` : `${progress}%`;
+            const pct = (shield / maxShield) * 100;
+            D.shield.style.width = pct + '%';
+            D.shield.classList.remove('danger', 'warning');
+            if (pct < 25) D.shield.classList.add('danger');
+            else if (pct < 50) D.shield.classList.add('warning');
+        }
+
+        function updateTypedDisplay() {
+            const typedText = typedChars.map(t => t.char).join('');
+            if (typedText.length === 0) {
+                D.typed.innerHTML = '<span class="cursor-blink"></span>';
+                D.typed.classList.remove('active');
+            } else {
+                D.typed.textContent = typedText;
+                D.typed.innerHTML += '<span class="cursor-blink"></span>';
+                D.typed.classList.add('active');
+            }
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = Math.floor(timeLeft % 60);
+            D.timer.textContent = `⏳ ${mins}:${secs.toString().padStart(2, '0')}`;
+            D.timer.classList.remove('warning', 'danger', 'exam');
+            if (isExamMode) D.timer.classList.add('exam');
+            if (timeLeft <= 5) D.timer.classList.add('danger');
+            else if (timeLeft <= 10) D.timer.classList.add('warning');
+        }
+
+        function loadNextPassage() {
+            if (!gameRunning) return;
+            if (isExamMode) {
+                endGame();
+                return;
+            } else {
+                const next = selectRandomPassage();
+                loadPassage(next);
+                D.lastWord.textContent = `✦ New passage loaded`;
+                D.lastWord.style.opacity = '1';
+                setTimeout(() => { D.lastWord.style.opacity = '0'; }, 1200);
+                updateStats();
+            }
+        }
+
+        function endGame() {
+            if (gameEnded) return;
+            gameEnded = true;
+            gameRunning = false;
+            if (timerInterval) { clearInterval(timerInterval);
+                timerInterval = null; }
+
+            D.homeBtn.classList.remove('hidden');
+            D.pdfBtn.classList.remove('hidden');
+
+            const accuracy = totalTypedChars > 0 ? (totalCorrectChars / totalTypedChars) * 100 : 0;
+            const minutes = elapsedSeconds / 60;
+            const wpm = minutes > 0 ? (totalCorrectChars / 5) / minutes : 0;
+
+            D.finalScore.textContent = score;
+            D.finalWPM.textContent = `WPM: ${Math.round(wpm)}`;
+            D.finalAccuracy.textContent = `accuracy: ${Math.round(accuracy)}% · ${totalCorrectChars}/${totalTypedChars} correct`;
+            D.gameover.classList.remove('hidden');
+
+            for (let i = 0; i < 5; i++) spawnExplosion(W / 2, H / 2, '#8aba8a', 18);
+
+            window._lastResult = {
+                score,
+                wpm: Math.round(wpm),
+                accuracy: Math.round(accuracy),
+                correctChars: totalCorrectChars,
+                totalTyped: totalTypedChars,
+                elapsedSeconds: Math.round(elapsedSeconds),
+                timeLimit,
+                isExamMode,
+                modeLabel: isExamMode ? '⚡ Final Exam' : 'Standard'
+            };
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = timeLimit;
+            elapsedSeconds = 0;
+            startTime = Date.now();
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                elapsedSeconds = (now - startTime) / 1000;
+                timeLeft = Math.max(0, timeLimit - elapsedSeconds);
+                updateTimerDisplay();
+                if (timeLeft <= 0) endGame();
+            }, 100);
+        }
+
+        // ============================================================
+        // PDF Generation
+        // ============================================================
+        async function generatePDF() {
+            const r = window._lastResult;
+            if (!r) return;
+
+            document.getElementById('cert-score').textContent = r.score.toLocaleString();
+            document.getElementById('cert-wpm').textContent = r.wpm;
+            document.getElementById('cert-accuracy').textContent = r.accuracy + '%';
+            document.getElementById('cert-correct').textContent = `${r.correctChars} / ${r.totalTyped}`;
+            document.getElementById('cert-time').textContent = r.elapsedSeconds + 's';
+            document.getElementById('cert-mode').textContent = r.modeLabel;
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            document.getElementById('cert-date').textContent = dateStr;
+
+            const el = document.getElementById('certificate-template');
+
+            try {
+                const canvas = await html2canvas(el, {
+                    scale: 3.5,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: null,
+                    logging: false,
+                    width: 900,
+                    height: 640,
+                });
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'mm', 'a4');
+                const pdfWidth = 297;
+                const pdfHeight = 210;
+                const imgWidth = pdfWidth - 8;
+                const imgHeight = (imgWidth / 900) * 640;
+                const yOffset = (pdfHeight - imgHeight) / 2;
+                doc.addImage(imgData, 'PNG', 4, yOffset, imgWidth, imgHeight);
+                doc.save('Slytherin_Certificate.pdf');
+            } catch (err) {
+                // Fallback: basic PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'mm', 'a4');
+                const w = 297,
+                    h = 210;
+                doc.setFillColor(10, 20, 10);
+                doc.rect(0, 0, w, h, 'F');
+                doc.setDrawColor(60, 140, 60);
+                doc.setLineWidth(0.6);
+                doc.rect(10, 10, w - 20, h - 20, 'S');
+                doc.setDrawColor(40, 100, 40);
+                doc.setLineWidth(0.3);
+                doc.rect(14, 14, w - 28, h - 28, 'S');
+
+                doc.setDrawColor(180, 200, 120);
+                doc.setLineWidth(0.4);
+                const cSize = 15;
+                doc.line(14, 14 + cSize, 14, 14);
+                doc.line(14, 14, 14 + cSize, 14);
+                doc.line(w - 14, 14 + cSize, w - 14, 14);
+                doc.line(w - 14, 14, w - 14 - cSize, 14);
+                doc.line(14, h - 14 - cSize, 14, h - 14);
+                doc.line(14, h - 14, 14 + cSize, h - 14);
+                doc.line(w - 14, h - 14 - cSize, w - 14, h - 14);
+                doc.line(w - 14, h - 14, w - 14 - cSize, h - 14);
+
+                doc.setFontSize(36);
+                doc.setTextColor(180, 200, 180);
+                doc.setFont('helvetica', 'normal');
+                doc.text('🐍', w / 2, 32, { align: 'center' });
+
+                doc.setFontSize(32);
+                doc.setTextColor(200, 220, 200);
+                doc.setFont('helvetica', 'bold');
+                doc.text('SERPENT\'S SCRIPTURE', w / 2, 46, { align: 'center' });
+
+                doc.setFontSize(12);
+                doc.setTextColor(100, 160, 100);
+                doc.setFont('helvetica', 'normal');
+                doc.text('— Slytherin Typing Assessment —', w / 2, 56, { align: 'center' });
+
+                doc.setDrawColor(60, 120, 60);
+                doc.setLineWidth(0.3);
+                doc.line(50, 62, w - 50, 62);
+
+                doc.setFontSize(16);
+                doc.setTextColor(160, 200, 160);
+                doc.setFont('helvetica', 'bold');
+                doc.text('✦ Assessment Report ✦', w / 2, 76, { align: 'center' });
+
+                doc.setFillColor(15, 30, 15, 0.4);
+                doc.roundedRect(45, 84, w - 90, 74, 4, 4, 'F');
+                doc.setDrawColor(60, 120, 60);
+                doc.setLineWidth(0.2);
+                doc.roundedRect(45, 84, w - 90, 74, 4, 4, 'S');
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                const stats = [
+                    ['Score', r.score],
+                    ['WPM', r.wpm],
+                    ['Accuracy', r.accuracy + '%'],
+                    ['Correct', `${r.correctChars}/${r.totalTyped}`],
+                    ['Time', r.elapsedSeconds + 's'],
+                    ['Mode', r.modeLabel]
+                ];
+                let yPos = 98;
+                for (const [label, value] of stats) {
+                    doc.setTextColor(130, 180, 130);
+                    doc.text(label + ':', 65, yPos);
+                    doc.setTextColor(220, 240, 220);
+                    doc.text(String(value), 185, yPos);
+                    yPos += 9;
+                }
+
+                doc.setFontSize(11);
+                doc.setTextColor(80, 140, 80);
+                doc.setFont('helvetica', 'italic');
+                doc.text('“The serpent acknowledges those who master the scripture.”', w / 2, 178, { align: 'center' });
+
+                doc.setDrawColor(60, 120, 60);
+                doc.setLineWidth(0.2);
+                doc.line(50, 186, w - 50, 186);
+
+                doc.setFontSize(9);
+                doc.setTextColor(60, 120, 60);
+                doc.setFont('helvetica', 'bold');
+                const dateStr2 = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                doc.text(`Issued: ${dateStr2} · House of Slytherin`, w / 2, 196, { align: 'center' });
+
+                doc.setFontSize(60);
+                doc.setTextColor(20, 50, 20, 0.06);
+                doc.setFont('helvetica', 'bold');
+                doc.text('SLYTHERIN', w / 2, h - 25, { align: 'center' });
+
+                doc.save('Slytherin_Certificate.pdf');
+            }
+        }
+
+        D.pdfBtn.addEventListener('click', generatePDF);
+        D.pdfResultBtn.addEventListener('click', generatePDF);
+
+        // ============================================================
+        // Navigation
+        // ============================================================
+        function goHome() {
+            gameRunning = false;
+            gameEnded = false;
+            if (timerInterval) { clearInterval(timerInterval);
+                timerInterval = null; }
+            D.gameover.classList.add('hidden');
+            D.start.classList.remove('hidden');
+            D.homeBtn.classList.add('hidden');
+            D.pdfBtn.classList.add('hidden');
+            typedChars = [];
+            charIndex = 0;
+            errors = 0;
+            shield = 100;
+            score = 0;
+            combo = 1;
+            comboTimer = 0;
+            isExamMode = false;
+            totalCorrectChars = 0;
+            totalTypedChars = 0;
+            const p = selectRandomPassage();
+            loadPassage(p);
+            D.combo.classList.remove('show');
+            D.lastWord.style.opacity = '0';
+            updateTimerDisplay();
+            updateStats();
+        }
+        D.homeBtn.addEventListener('click', goHome);
+
+        // ============================================================
+        // Input handling
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+
+            if (e.key === 'Escape') {
+                typedChars = [];
+                charIndex = 0;
+                errors = 0;
+                shield = 100;
+                renderPassage();
+                updateStats();
+                updateTypedDisplay();
+                e.preventDefault();
+                return;
+            }
+            if (e.key === 'Backspace') {
+                if (typedChars.length > 0) {
+                    const removed = typedChars.pop();
+                    if (removed.status === 'incorrect') errors--;
+                    charIndex--;
+                    renderPassage();
+                    updateStats();
+                    updateTypedDisplay();
+                }
+                e.preventDefault();
+                return;
+            }
+
+            const key = e.key;
+            if (key.length === 1 && key.charCodeAt(0) >= 32 && key.charCodeAt(0) <= 126) {
+                e.preventDefault();
+                if (charIndex < passage.length) {
+                    const expected = passage[charIndex];
+                    const isCorrect = (key === expected);
+                    typedChars.push({ char: key, status: isCorrect ? 'correct' : 'incorrect' });
+                    totalTypedChars++;
+                    if (isCorrect) {
+                        totalCorrectChars++;
+                        const bonus = Math.floor(combo / 5);
+                        const pts = 2 + bonus;
+                        score += pts;
+                        combo++;
+                        comboTimer = 120;
+                        D.combo.textContent = `✦ Combo ×${combo}`;
+                        D.combo.classList.add('show');
+                        spawnExplosion(W / 2 + (Math.random() - 0.5) * 200, H / 2 + 100, '#8aba8a', 2);
+                        playTypingSound(true);
+                    } else {
+                        errors++;
+                        shield = Math.max(0, shield - 5);
+                        combo = 1;
+                        comboTimer = 0;
+                        D.combo.classList.remove('show');
+                        spawnExplosion(W / 2, H / 2 + 100, '#8a4a4a', 5);
+                        playTypingSound(false);
+                    }
+                    charIndex++;
+                    renderPassage();
+                    updateStats();
+                    updateTypedDisplay();
+
+                    if (charIndex === passage.length) {
+                        loadNextPassage();
+                    }
+                    if (shield <= 0) endGame();
+                }
+            }
+        });
+
+        // ============================================================
+        // Game loop
+        // ============================================================
+        function loop(t) {
+            drawStars(t);
+            updateFX();
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer === 0) { combo = 1;
+                    D.combo.classList.remove('show'); }
+            }
+            requestAnimationFrame(loop);
+        }
+
+        // ============================================================
+        // Start / Restart
+        // ============================================================
+        function startGame() {
+            const selected = document.querySelector('.time-selector button.active');
+            const timeValue = selected ? parseInt(selected.dataset.time) : 60;
+            const isExam = selected ? selected.classList.contains('exam-btn') : false;
+
+            gameEnded = false;
+            isExamMode = isExam;
+            timeLimit = isExam ? 300 : timeValue;
+            score = 0;
+            combo = 1;
+            comboTimer = 0;
+            errors = 0;
+            shield = 100;
+            totalCorrectChars = 0;
+            totalTypedChars = 0;
+
+            if (isExam) {
+                const p = selectRandomExamPassage();
+                loadPassage(p);
+                D.timer.classList.add('exam');
+                D.lastWord.textContent = `⚡ Final Exam — One Epic Passage`;
+                D.lastWord.style.opacity = '1';
+                setTimeout(() => { D.lastWord.style.opacity = '0'; }, 1500);
+            } else {
+                const p = selectRandomPassage();
+                loadPassage(p);
+                D.timer.classList.remove('exam');
+                D.lastWord.textContent = `✦ Continuous mode — type until time runs out`;
+                D.lastWord.style.opacity = '1';
+                setTimeout(() => { D.lastWord.style.opacity = '0'; }, 1500);
+            }
+
+            gameRunning = true;
+            if (timerInterval) clearInterval(timerInterval);
+
+            D.start.classList.add('hidden');
+            D.gameover.classList.add('hidden');
+            D.combo.classList.remove('show');
+            D.homeBtn.classList.remove('hidden');
+            D.pdfBtn.classList.add('hidden');
+
+            renderPassage();
+            updateStats();
+            updateTypedDisplay();
+            startTimer();
+        }
+
+        // Time selector
+        const timeButtons = document.querySelectorAll('.time-selector button');
+        timeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                timeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        document.querySelector('.time-selector button[data-time="60"]')?.classList.add('active');
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+
+        // ============================================================
+        // Init
+        // ============================================================
+        window.addEventListener('resize', () => { resize();
+            initStars(); });
+        const initial = selectRandomPassage();
+        loadPassage(initial);
+        updateTimerDisplay();
+        updateStats();
+        loop(0);
+    </script>
+</body>
+</html>
